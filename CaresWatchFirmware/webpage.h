@@ -7,7 +7,7 @@ static const char *index_html = R"--espform--(
 <html lang="en">
 
 <head>
-  <title> Simple Textbox </title>
+  <title> CARES Watch configuration </title>
   <style>
 body {
     padding: 20px;
@@ -39,7 +39,12 @@ body {
     <input type="text" id="ssidtext" name="ssidtext" value=""/>
     <label for="text2">Password</label>
     <input type="text" id="passtext" name="passtext" value=""/>
-    <button type="button" id="save-btn" class="btn btn-primary">Save WiFi Data</button>
+    <button type="button" id="savewifi-btn" class="btn btn-primary">Save WiFi Data</button>
+    <label id="result" for="result"></label>
+    <div />
+    <label for="text3">Weather city</label>
+    <input type="text" id="citytext" name="citytext" value=""/>
+    <button type="button" id="saveweather-btn" class="btn btn-primary">Save Weather Data</button>
     <label id="result" for="result"></label>
     <div />
     <button type="button" id="reboot-btn" class="btn btn-primary">Reboot CARES Watch</button>
