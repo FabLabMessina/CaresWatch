@@ -155,6 +155,14 @@ void setup() {
 
     ESPForm.startServer();
 
+    while (ESPForm.getClientCount() == 0);
+    preferences.getString("mySSID", _ssid, 20);
+    preferences.getString("myPass", _pass, 20);
+    preferences.getString("myCity", _city, 20);
+    ESPForm.setElementContent("ssidtext", _ssid);
+    ESPForm.setElementContent("passtext", _pass);
+    ESPForm.setElementContent("citytext", _city);
+
     while (1);
   }
   else
