@@ -5,10 +5,16 @@
 #include <Preferences.h>
 #include <ESPForm.h> //https://github.com/mobizt/ESPForm
 #include "webpage.h"
+#include "time.h"
+#include "sntp.h"
+#include <NTPClient.h>
+
 
 SSD1306  display(0x3c, 5, 4);
 Preferences preferences;
 WiFiServer server(80);
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, NTP_ADDRESS, NTP_OFFSET, NTP_INTERVAL);
 
 String mySSID;
 String myPass;
@@ -17,10 +23,12 @@ char _pass[20];
 void drawSplashScreen();
 void showScreen();
 int analogVolts;
+long batteryCheckMillis = 0;
 IPAddress IP;
 
 unsigned long prevMillis = 0;
 unsigned long serverTimeout = 2 * 60 * 1000;
+//struct tm timeinfo;
 
 void formElementEventCallback(ESPFormClass::HTMLElementItem element)
 {
@@ -76,6 +84,11 @@ void serverTimeoutCallback()
   Serial.println();
 }
 
+
+long startMillis = 0;
+long delayScreen = 5000;
+bool display_on = false;
+
 void setup() {
   Serial.begin(115200);
   pinMode(BUTTON_1, INPUT_PULLUP);
@@ -90,14 +103,9 @@ void setup() {
   drawSplashScreen();
   display.display();
 
-  //  preferences.putString("mySSID", String("ssid"));
-  //  preferences.putString("myPass", String("pass"));
-  //  if (!preferences.getString("mySSID", mySSID, 20) || !preferences.getString("myPass", myPass, 20))
-
   if (!digitalRead(BUTTON_1) || !preferences.getString("mySSID", _ssid, 20) || !preferences.getString("myPass", _pass, 20))
   {
     WiFi.softAP(AP_SSID, AP_PASS);
-    //      server.begin();
 
     IP = WiFi.softAPIP();
 
@@ -129,85 +137,153 @@ void setup() {
     mySSID = _ssid;
     myPass = _pass;
 
-    display.clear();
-    display.drawString(0, 0, "Connecting to:");
-    display.drawString(0, 10, mySSID);
-    display.display();
-
     WiFi.begin(mySSID.c_str(), myPass.c_str());
-
-    while (WiFi.status() != WL_CONNECTED) {
-      delay(125);
-      display.drawString(0, 20, "   ");
-      display.display();
-
-      delay(125);
-      display.drawString(0, 20, ".  ");
-      display.display();
-
-      delay(125);
-      display.drawString(0, 20, ".. ");
-      display.display();
-
-      delay(125);
-      display.drawString(0, 20, "...");
-      display.display();
-
-    }
-    display.clear();
-    display.drawString(0, 0, "Connected to:");
-    display.drawString(0, 10, mySSID);
-    display.drawString(0, 20, WiFi.localIP().toString());
-    display.display();
-
-    //      drawSplashScreen();
+    //
+    //    while (WiFi.status() < WL_CONNECTED) {
+    //      display.clear();
+    //      delay(125);
+    //      display.drawString(0, 20, "   ");
     //      display.display();
+    //
+    //      delay(125);
+    //      display.drawString(0, 20, ".  ");
+    //      display.display();
+    //
+    //      delay(125);
+    //      display.drawString(0, 20, ".. ");
+    //      display.display();
+    //
+    //      delay(125);
+    //      display.drawString(0, 20, "...");
+    //      display.display();
+    //
+    //    }
+    //
+    //    if (WiFi.status() == WL_CONNECTED)
+    //    {
+    //      display.clear();
+    //      display.drawString(0, 0, "Connected to:");
+    //      display.drawString(0, 10, mySSID);
+    //      display.drawString(0, 20, WiFi.localIP().toString());
+    //      display.display();
+    //    }
+    //    else
+    //    {
+    //      display.clear();
+    //      display.drawString(0, 0, "Error connecting to ");
+    //      display.drawString(0, 10, mySSID);
+    //      display.display();
+    //    }
 
-
+    //sntp_set_time_sync_notification_cb( timeavailable );
+    //    configTime(gmtOffset_sec, daylightOffset_sec, ntpServer1, ntpServer2);
+    //    configTzTime(time_zone, ntpServer1, ntpServer2);
   }
+  xTaskCreatePinnedToCore(
+    wifi_task
+    ,  "wifi_task"   // A name just for humans
+    ,  1024  // This stack size can be checked & adjusted by reading the Stack Highwater
+    ,  NULL
+    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    ,  NULL
+    ,  ARDUINO_RUNNING_CORE);
+  display_on = true;
 
+}
+int wifi_status;
 
+void wifi_task(void *param) {
+  (void) param;
+  vTaskDelay(1000);
 
-  //  else
-  //  {
-  //    preferences.getString("mySSID", mySSID, 20);
-  //    preferences.getString("myPass", myPass, 20);
-  //    display.clear();
-  //    display.drawString(0, 0, mySSID);
-  //    display.drawString(0, 30, myPass);
-  //    display.display();
-  //  }
+  while (true) {
+    wifi_status = WiFi.status();
+
+    if (wifi_status != WL_CONNECTED) {
+      WiFi.reconnect();
+    }
+    vTaskDelay(10000);
+  }
 }
 
-//void loop() {
-//  WiFiClient client = server.available();
-//  if (client) {
-//    display.drawString(0, 20, "            ");
-//    display.drawString(0, 20, "New Client");
-//    display.drawString(0, 30, client.remoteIP().toString());
-//    display.display();
-//  }
-//  else
-//  {
-//    display.drawString(0, 20, "No Client");
-//    display.drawString(0, 30, "               ");
-//
-//    display.display();
-//  }
-//  delay(1000);
-//}
+void showScreen()
+{
+  display_on = true;
+  startMillis = millis();
+}
+
+void showMainScreen()
+{
+  timeClient.update();
+  String formattedTime;
+
+  display.clear();
+  display.setFont(ArialMT_Plain_10);
+
+  if (millis() - batteryCheckMillis > batteryCheckDelay )
+  {
+    analogVolts = (int)((float)(analogReadMilliVolts(BATT_PIN) / VMAX_BATT) * 200);
+    batteryCheckMillis = millis();
+  }
+  display.drawString(100, 0, (String)analogVolts + (String)'%');
+
+  if (wifi_status == WL_CONNECTED)
+  {
+    display.drawString(0, 0, mySSID);
+  }
+  else if  (wifi_status == WL_IDLE_STATUS)
+  {
+    display.drawString(0, 0, "Connecting...");
+  }
+  else
+  {
+    display.drawString(0, 0, "Not connected");
+  }
+  display.setFont(ArialMT_Plain_24);
+
+  if (timeClient.isTimeSet()) {
+    formattedTime = timeClient.getFormattedTime();
+    display.drawString(15, 15, formattedTime);
+  }
+  else
+  {
+    display.drawString(0, 20, "  NO TIME");
+  }
+  display.display();
+}
+
 
 void loop()
 {
-  //If a client existed
-  if (ESPForm.getClientCount() > 0)
-  {
+  bool button1_state = digitalRead(BUTTON_1);
+  bool button2_state = digitalRead(BUTTON_2);
+  //  display.clear();
 
-    if (millis() - prevMillis > 1000)
+
+  if (!button1_state && !display_on)
+  {
+    Serial.println("Show screen");
+    showScreen();
+  }
+  //  else if (!button1_state && display_on)
+  //  {
+  //    display.clear();
+  //
+  //    display.display();
+  //  }
+
+  if (display_on && (millis() - startMillis) < screenOnTime)
+  {
+    Serial.println("mainScreen");
+    showMainScreen();
+  }
+  else
+  {
+    if (display_on)
     {
-      prevMillis = millis();
-      //The event listener for text2 is not set because we don't want to listen to its value changes
-      //      ESPForm.setElementContent("result", ssid + pass);
+      display.clear();
+      display.display();
+      display_on = false;
     }
   }
 }
