@@ -26,7 +26,7 @@ const long screenOnTime = 5000;
 const long weatherCheckDelay = 3600*1000/2; //30 minutes
 
 const String OW_API = "https://api.openweathermap.org/data/2.5/weather?q=";
-const String OW_APPID = "&APPID=405c2a8dcfc56cbffeb70ff89adc1a0e";
+const String OW_APPID = "&APPID=";
 // END OpenWeather Settings
 
 // NTP Settings

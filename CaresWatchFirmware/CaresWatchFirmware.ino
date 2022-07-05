@@ -21,10 +21,12 @@ NTPClient timeClient(ntpUDP, NTP_ADDRESS, NTP_OFFSET, NTP_INTERVAL);
 String mySSID;
 String myPass;
 String myCity;
+String myOWToken;
 
 char _ssid[20];
 char _pass[20];
 char _city[20];
+char _owtoken[50];
 
 void drawSplashScreen();
 void showScreen();
@@ -51,6 +53,10 @@ void formElementEventCallback(ESPFormClass::HTMLElementItem element)
   {
     myCity = element.value;
   }
+  else if (element.id == "owtoken")
+  {
+    myOWToken = element.value;
+  }
   else if (element.id == "savewifi-btn")
   {
     preferences.putString("mySSID", mySSID);
@@ -72,8 +78,9 @@ void formElementEventCallback(ESPFormClass::HTMLElementItem element)
   {
     preferences.putString("myCity", myCity);
     preferences.getString("myCity", _city, 20);
-
-    if (myCity == (String)_city)
+    preferences.putString("myOWToken", myOWToken);
+    preferences.getString("myOWToken", _owtoken, 50);
+    if (myCity == (String)_city && myOWToken == (String)_owtoken)
     {
       ESPForm.setElementContent("result", "Weather data saved! Please, reboot");
     }
@@ -127,7 +134,7 @@ void setup() {
   drawSplashScreen();
   display.display();
 
-  if (!digitalRead(BUTTON_1) || !preferences.getString("mySSID", _ssid, 20) || !preferences.getString("myPass", _pass, 20) || !preferences.getString("myCity", _city, 20))
+  if (!digitalRead(BUTTON_1) || !preferences.getString("mySSID", _ssid, 20) || !preferences.getString("myPass", _pass, 20) || !preferences.getString("myCity", _city, 20) || !preferences.getString("myOWToken", _owtoken, 50) )
   {
     WiFi.softAP(AP_SSID, AP_PASS);
 
@@ -147,6 +154,7 @@ void setup() {
     ESPForm.addElementEventListener("ssidtext", ESPFormClass::EVENT_ON_CHANGE);
     ESPForm.addElementEventListener("passtext", ESPFormClass::EVENT_ON_CHANGE);
     ESPForm.addElementEventListener("citytext", ESPFormClass::EVENT_ON_CHANGE);
+    ESPForm.addElementEventListener("owtoken", ESPFormClass::EVENT_ON_CHANGE);
     ESPForm.addElementEventListener("savewifi-btn", ESPFormClass::EVENT_ON_CLICK);
     ESPForm.addElementEventListener("saveweather-btn", ESPFormClass::EVENT_ON_CLICK);
     ESPForm.addElementEventListener("reboot-btn", ESPFormClass::EVENT_ON_CLICK);
@@ -159,9 +167,11 @@ void setup() {
     preferences.getString("mySSID", _ssid, 20);
     preferences.getString("myPass", _pass, 20);
     preferences.getString("myCity", _city, 20);
+    preferences.getString("myOWToken", _owtoken, 50);
     ESPForm.setElementContent("ssidtext", _ssid);
     ESPForm.setElementContent("passtext", _pass);
     ESPForm.setElementContent("citytext", _city);
+    ESPForm.setElementContent("owtoken", _owtoken);
 
     while (1);
   }
@@ -170,52 +180,13 @@ void setup() {
     preferences.getString("mySSID", _ssid, 20);
     preferences.getString("myPass", _pass, 20);
     preferences.getString("myCity", _city, 20);
+    preferences.getString("myOWToken", _owtoken, 50);
 
     mySSID = _ssid;
     myPass = _pass;
     myCity = _city;
-
+    myOWToken = _owtoken;
     WiFi.begin(mySSID.c_str(), myPass.c_str());
-    //
-    //    while (WiFi.status() < WL_CONNECTED) {
-    //      display.clear();
-    //      delay(125);
-    //      display.drawString(0, 20, "   ");
-    //      display.display();
-    //
-    //      delay(125);
-    //      display.drawString(0, 20, ".  ");
-    //      display.display();
-    //
-    //      delay(125);
-    //      display.drawString(0, 20, ".. ");
-    //      display.display();
-    //
-    //      delay(125);
-    //      display.drawString(0, 20, "...");
-    //      display.display();
-    //
-    //    }
-    //
-    //    if (WiFi.status() == WL_CONNECTED)
-    //    {
-    //      display.clear();
-    //      display.drawString(0, 0, "Connected to:");
-    //      display.drawString(0, 10, mySSID);
-    //      display.drawString(0, 20, WiFi.localIP().toString());
-    //      display.display();
-    //    }
-    //    else
-    //    {
-    //      display.clear();
-    //      display.drawString(0, 0, "Error connecting to ");
-    //      display.drawString(0, 10, mySSID);
-    //      display.display();
-    //    }
-
-    //sntp_set_time_sync_notification_cb( timeavailable );
-    //    configTime(gmtOffset_sec, daylightOffset_sec, ntpServer1, ntpServer2);
-    //    configTzTime(time_zone, ntpServer1, ntpServer2);
   }
   xTaskCreatePinnedToCore(
     wifi_task
@@ -266,7 +237,7 @@ int updateWeather()
   OW_city = "";
   Serial.println("updateWeather");
   HTTPClient http;
-  String url = (String)(OW_API + myCity + OW_APPID);
+  String url = (String)(OW_API + myCity + OW_APPID + myOWToken);
   Serial.println("url: " + url);
   http.begin(url); //HTTP
   int httpCode = http.GET();
@@ -276,7 +247,6 @@ int updateWeather()
       Serial.println("payload: ");
       Serial.println(payload);
       deserializeJson(doc, payload);
-      //JsonObject obj = doc["weather"][0].as<JsonObject>();
 
       OW_description = doc["weather"][0]["description"].as<String>();
       OW_city = doc["name"].as<String>();

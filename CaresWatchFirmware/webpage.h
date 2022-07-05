@@ -44,6 +44,8 @@ body {
     <div />
     <label for="text3">Weather city</label>
     <input type="text" id="citytext" name="citytext" value=""/>
+    <label for="text3">OpenWeather token</label>
+    <input type="text" id="owtoken" name="owtoken" value=""/>
     <button type="button" id="saveweather-btn" class="btn btn-primary">Save Weather Data</button>
     <label id="result" for="result"></label>
     <div />
