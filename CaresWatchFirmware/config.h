@@ -19,7 +19,7 @@ const char* AP_PASS = "";
 // END FreeRTOS Settings
 
 // Screen Settings
-const long screenOnTime = 5000;
+const long screenOnTime = 10000;
 // END Screen Settings
 
 // OpenWeather Settings

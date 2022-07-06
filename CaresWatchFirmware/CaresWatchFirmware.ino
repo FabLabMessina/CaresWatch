@@ -13,8 +13,8 @@
 //#include "sntp.h"
 #include <NTPClient.h>
 #include <ArduinoJson.h>
-#include <Fonts/FreeMono12pt7b.h>
-#include <Fonts/FreeMono24pt7b.h>
+#include <Fonts/FreeSansBold12pt7b.h>
+#include <Fonts/FreeSans9pt7b.h>
 
 //SSD1306  display(0x3c, 5, 4);
 Adafruit_SSD1306 display = Adafruit_SSD1306(128, 64, &Wire);
@@ -123,7 +123,6 @@ void serverTimeoutCallback()
 
 
 long startMillis = 0;
-long delayScreen = 5000;
 bool display_on = false;
 
 void setup() {
@@ -133,29 +132,22 @@ void setup() {
   pinMode(BUTTON_2, INPUT_PULLUP);
   preferences.begin("myWatch", false);
 
-  //  display.init();
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
   display.setRotation(180);
-
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0, 2);
+  display.setFont();
   analogVolts = (int)((float)(analogReadMilliVolts(BATT_PIN) / VMAX_BATT) * 200);
   drawSplashScreen();
-  display.display();
 
   if (!digitalRead(BUTTON_1) || !preferences.getString("mySSID", _ssid, 20) || !preferences.getString("myPass", _pass, 20) || !preferences.getString("myCity", _city, 20) || !preferences.getString("myOWToken", _owtoken, 50) )
   {
     WiFi.softAP(AP_SSID, AP_PASS);
 
     IP = WiFi.softAPIP();
-
     display.clearDisplay();
-    display.setCursor(0, 0);
-    display.print("Connect to " + (String)AP_SSID);
-    display.setCursor(0, 10);
-    display.print("and visit this address");
-    display.setCursor(0, 20);
-    display.print("with your browser:");
-    display.setCursor(0, 30);
-    display.print(IP.toString());
+    display.setCursor(0, 2);
+    display.print("Connect to\n\"" + (String)AP_SSID + (String)"\" WiFi\nand visit this address with your browser:\n\n" + IP.toString()) ;
     display.display();
 
     //Add the html contents (in html.h) for the web page rendering
@@ -286,7 +278,8 @@ void showMainScreen()
   display.clearDisplay();
   display.setTextColor(SSD1306_WHITE);
   display.setTextSize(0.6);
-
+  display.setCursor(0, 2);
+  display.setFont();
   if (millis() - batteryCheckMillis > batteryCheckDelay )
   {
     analogVolts = (int)((float)(analogReadMilliVolts(BATT_PIN) * 200 / VMAX_BATT));
@@ -301,42 +294,42 @@ void showMainScreen()
 
   if (OW_description != "" && OW_city != "")
   {
-    display.setCursor(0, 40);
+    display.setCursor(0, 45);
     display.print(OW_city);
-    String str = OW_description + ", " + (String)OW_temp + (String)"*C" + (String)", " + (String)OW_hum + (String)'%';
-    display.setCursor(0, 50);
+    String str = OW_description + ", " + (String)OW_temp + (String)"'C" + (String)", " + (String)OW_hum + (String)'%';
+    display.setCursor(0, 55);
     display.print(str);
   }
-  display.setCursor(100, 0);
+  display.setCursor(104, 2);
 
   display.print((String)analogVolts + (String)'%');
 
   if (wifi_status == WL_CONNECTED)
   {
-    display.setCursor(0, 0);
+    display.setCursor(0, 2);
     display.print(mySSID);
   }
   else if  (wifi_status == WL_IDLE_STATUS)
   {
-    display.setCursor(0, 0);
+    display.setCursor(0, 2);
     display.print("Connecting...");
   }
   else
   {
-    display.setCursor(0, 0);
+    display.setCursor(0, 2);
     display.print("Not connected");
   }
-  display.setTextSize(2);
 
+  display.setFont(&FreeSansBold12pt7b);
   if (timeClient.isTimeSet()) {
     formattedTime = timeClient.getFormattedTime();
-    display.setCursor(15, 15);
+    display.setCursor(16, 36);
     display.print(formattedTime);
   }
   else
   {
-    display.setCursor(0, 20);
-    display.print("  NO TIME");
+    display.setCursor(16, 36);
+    display.print("NO TIME");
   }
   display.display();
 }
@@ -357,7 +350,6 @@ void loop()
   //  else if (!button1_state && display_on)
   //  {
   //    display.clearDisplay();
-  //
   //    display.display();
   //  }
 
@@ -381,5 +373,9 @@ void loop()
 }
 
 void drawSplashScreen() {
+  display.clearDisplay();
+  display.display();
   display.drawBitmap(0, 0, (uint8_t*)logo_bits, 128, 64, SSD1306_WHITE);
+  display.display();
+
 }
