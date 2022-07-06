@@ -39,7 +39,7 @@ margin: 2rem;
 padding: 1rem 3rem 2rem;
 max-width: 90vw;
 box-sizing: border-box;
-background: linear-gradient(45deg,#c6bf58 0%,#68c5d5 100%);
+background: linear-gradient(90deg,#7ad2c3 0%,#68c5d5 100%);
 border-radius: .3rem;
 }
 label {
