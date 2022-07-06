@@ -42,6 +42,10 @@ box-sizing: border-box;
 background: linear-gradient(90deg,#7ad2c3 0%,#68c5d5 100%);
 border-radius: .3rem;
 }
+hr {
+border: 1px solid rgba(255,255,255,.05);
+margin: 2rem;
+}
 label {
 display: block;
 margin-top: 1rem;
@@ -102,7 +106,9 @@ margin: 0 0 1rem;
 
 <label>SSID: <input type="text" id="ssidtext" name="ssidtext" value=""/></label>
 <label>Password: <input type="text" id="passtext" name="passtext" value=""/></label>
+<hr>
 <label>Weather city: <input type="text" id="citytext" name="citytext" value=""/></label>
+<label><acronym title="Open Weather - https://openweathermap.org/">OW</acronym> Token: <input type="text" id="owtoken" name="owtoken" value=""/></label>
 
 <div id="panel">
 <!-- Icons by Font Awesome - https://fontawesome.com -->
