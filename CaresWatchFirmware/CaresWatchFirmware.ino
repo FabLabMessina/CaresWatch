@@ -2,17 +2,23 @@
 #include <HTTPClient.h>
 #include "config.h"
 #include "logo.h"
-#include "SSD1306.h"
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+
+#include <Adafruit_SSD1306.h>
 #include <Preferences.h>
 #include <ESPForm.h> //https://github.com/mobizt/ESPForm
 #include "webpage.h"
 #include "time.h"
-#include "sntp.h"
+//#include "sntp.h"
 #include <NTPClient.h>
 #include <ArduinoJson.h>
+#include <Fonts/FreeMono12pt7b.h>
+#include <Fonts/FreeMono24pt7b.h>
 
+//SSD1306  display(0x3c, 5, 4);
+Adafruit_SSD1306 display = Adafruit_SSD1306(128, 64, &Wire);
 
-SSD1306  display(0x3c, 5, 4);
 Preferences preferences;
 WiFiServer server(80);
 WiFiUDP ntpUDP;
@@ -122,13 +128,14 @@ bool display_on = false;
 
 void setup() {
   Serial.begin(115200);
+  Wire.begin(5, 4);
   pinMode(BUTTON_1, INPUT_PULLUP);
   pinMode(BUTTON_2, INPUT_PULLUP);
   preferences.begin("myWatch", false);
 
-  display.init();
-  display.flipScreenVertically();
-  display.setFont(ArialMT_Plain_10);
+  //  display.init();
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  display.setRotation(180);
 
   analogVolts = (int)((float)(analogReadMilliVolts(BATT_PIN) / VMAX_BATT) * 200);
   drawSplashScreen();
@@ -140,11 +147,15 @@ void setup() {
 
     IP = WiFi.softAPIP();
 
-    display.clear();
-    display.drawString(0, 0, "Connect to " + (String)AP_SSID);
-    display.drawString(0, 10, "and visit this address");
-    display.drawString(0, 20, "with your browser:");
-    display.drawString(0, 30, IP.toString());
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.print("Connect to " + (String)AP_SSID);
+    display.setCursor(0, 10);
+    display.print("and visit this address");
+    display.setCursor(0, 20);
+    display.print("with your browser:");
+    display.setCursor(0, 30);
+    display.print(IP.toString());
     display.display();
 
     //Add the html contents (in html.h) for the web page rendering
@@ -272,8 +283,9 @@ void showMainScreen()
   timeClient.update();
   String formattedTime;
 
-  display.clear();
-  display.setFont(ArialMT_Plain_10);
+  display.clearDisplay();
+  display.setTextColor(SSD1306_WHITE);
+  display.setTextSize(0.6);
 
   if (millis() - batteryCheckMillis > batteryCheckDelay )
   {
@@ -289,34 +301,42 @@ void showMainScreen()
 
   if (OW_description != "" && OW_city != "")
   {
-    display.drawString(0, 40, OW_city);
+    display.setCursor(0, 40);
+    display.print(OW_city);
     String str = OW_description + ", " + (String)OW_temp + (String)"*C" + (String)", " + (String)OW_hum + (String)'%';
-    display.drawString(0, 50, str);
+    display.setCursor(0, 50);
+    display.print(str);
   }
+  display.setCursor(100, 0);
 
-  display.drawString(100, 0, (String)analogVolts + (String)'%');
+  display.print((String)analogVolts + (String)'%');
 
   if (wifi_status == WL_CONNECTED)
   {
-    display.drawString(0, 0, mySSID);
+    display.setCursor(0, 0);
+    display.print(mySSID);
   }
   else if  (wifi_status == WL_IDLE_STATUS)
   {
-    display.drawString(0, 0, "Connecting...");
+    display.setCursor(0, 0);
+    display.print("Connecting...");
   }
   else
   {
-    display.drawString(0, 0, "Not connected");
+    display.setCursor(0, 0);
+    display.print("Not connected");
   }
-  display.setFont(ArialMT_Plain_24);
+  display.setTextSize(2);
 
   if (timeClient.isTimeSet()) {
     formattedTime = timeClient.getFormattedTime();
-    display.drawString(15, 15, formattedTime);
+    display.setCursor(15, 15);
+    display.print(formattedTime);
   }
   else
   {
-    display.drawString(0, 20, "  NO TIME");
+    display.setCursor(0, 20);
+    display.print("  NO TIME");
   }
   display.display();
 }
@@ -326,7 +346,7 @@ void loop()
 {
   bool button1_state = digitalRead(BUTTON_1);
   bool button2_state = digitalRead(BUTTON_2);
-  //  display.clear();
+  //  display.clearDisplay();
 
 
   if (!button1_state && !display_on)
@@ -336,7 +356,7 @@ void loop()
   }
   //  else if (!button1_state && display_on)
   //  {
-  //    display.clear();
+  //    display.clearDisplay();
   //
   //    display.display();
   //  }
@@ -353,7 +373,7 @@ void loop()
   {
     if (display_on)
     {
-      display.clear();
+      display.clearDisplay();
       display.display();
       display_on = false;
     }
@@ -361,5 +381,5 @@ void loop()
 }
 
 void drawSplashScreen() {
-  display.drawXbm(0, 0, 128, 64, (uint8_t*)logo_bits);
+  display.drawBitmap(0, 0, (uint8_t*)logo_bits, 128, 64, SSD1306_WHITE);
 }
