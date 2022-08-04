@@ -50,6 +50,7 @@ label {
 display: block;
 margin-top: 1rem;
 font-size: 1.5rem;
+color: #343839;
 }
 input[type="text"] {
 font-size: inherit;
@@ -110,6 +111,7 @@ margin: 0 0 1rem;
 <hr>
 <label>Weather city: <input type="text" id="citytext" name="citytext" value=""/></label>
 <label><acronym title="Open Weather - https://openweathermap.org/">OW</acronym> Token: <input type="text" id="owtoken" name="owtoken" value=""/></label>
+<label id="result"></label>
 
 <div id="panel">
 <!-- Icons by Font Awesome - https://fontawesome.com -->
