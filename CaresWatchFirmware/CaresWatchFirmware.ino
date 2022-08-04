@@ -63,36 +63,28 @@ void formElementEventCallback(ESPFormClass::HTMLElementItem element)
   {
     myOWToken = element.value;
   }
-  else if (element.id == "savewifi-btn")
+  else if (element.id == "save-btn")
   {
     preferences.putString("mySSID", mySSID);
     preferences.putString("myPass", myPass);
 
     preferences.getString("mySSID", _ssid, 20);
     preferences.getString("myPass", _pass, 20);
-    if (mySSID == (String)_ssid && myPass == (String)_pass)
-    {
-      ESPForm.setElementContent("result", "WiFi data saved! Please, reboot");
-    }
-    else
-    {
-      ESPForm.setElementContent("result", "Error saving WiFi Data");
-    }
 
-  }
-  else if (element.id == "saveweather-btn")
-  {
     preferences.putString("myCity", myCity);
     preferences.getString("myCity", _city, 20);
+
     preferences.putString("myOWToken", myOWToken);
     preferences.getString("myOWToken", _owtoken, 50);
-    if (myCity == (String)_city && myOWToken == (String)_owtoken)
+
+    if (mySSID == (String)_ssid && myPass == (String)_pass &&
+        myCity == (String)_city && myOWToken == (String)_owtoken)
     {
-      ESPForm.setElementContent("result", "Weather data saved! Please, reboot");
+      ESPForm.setElementContent("result", "Data has been saved! Please, reboot");
     }
     else
     {
-      ESPForm.setElementContent("result", "Error saving weather Data");
+      ESPForm.setElementContent("result", "An error has occurred while saving");
     }
 
   }
@@ -158,8 +150,7 @@ void setup() {
     ESPForm.addElementEventListener("passtext", ESPFormClass::EVENT_ON_CHANGE);
     ESPForm.addElementEventListener("citytext", ESPFormClass::EVENT_ON_CHANGE);
     ESPForm.addElementEventListener("owtoken", ESPFormClass::EVENT_ON_CHANGE);
-    ESPForm.addElementEventListener("savewifi-btn", ESPFormClass::EVENT_ON_CLICK);
-    ESPForm.addElementEventListener("saveweather-btn", ESPFormClass::EVENT_ON_CLICK);
+    ESPForm.addElementEventListener("save-btn", ESPFormClass::EVENT_ON_CLICK);
     ESPForm.addElementEventListener("reboot-btn", ESPFormClass::EVENT_ON_CLICK);
     //Start ESPForm's Webserver
     ESPForm.begin(formElementEventCallback, serverTimeoutCallback, serverTimeout, true);
