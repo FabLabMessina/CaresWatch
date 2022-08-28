@@ -36,6 +36,6 @@ const String OW_APPID = "&APPID=";
 // END NTP Settings
 
 // Battery Settings
-const long batteryCheckDelay = 30000;
+const long batteryCheckDelay = 180000;
 // END Battery settings
 #endif

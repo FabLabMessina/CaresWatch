@@ -39,6 +39,7 @@ void showScreen();
 int analogVolts;
 long batteryCheckMillis = 0;
 long weatherCheckMillis = 0;
+long displayOffMillis = 0;
 IPAddress IP;
 
 unsigned long prevMillis = 0;
@@ -200,10 +201,9 @@ void setup() {
     ,  NULL
     ,  ARDUINO_RUNNING_CORE);
   display_on = true;
-  analogVolts = (int)((float)(analogReadMilliVolts(BATT_PIN) * 200 / VMAX_BATT));
   updateWeather();
-
 }
+
 int wifi_status;
 
 void wifi_task(void *param) {
@@ -213,7 +213,7 @@ void wifi_task(void *param) {
   while (true) {
     wifi_status = WiFi.status();
 
-    if (wifi_status != WL_CONNECTED) {
+    if (wifi_status != WL_CONNECTED && wifi_status != WIFI_OFF) {
       WiFi.reconnect();
     }
     vTaskDelay(10000);
@@ -280,11 +280,11 @@ void showMainScreen()
   display.setTextSize(0.6);
   display.setCursor(0, 2);
   display.setFont();
-  if (millis() - batteryCheckMillis > batteryCheckDelay )
-  {
+  /*if (millis() - batteryCheckMillis > batteryCheckDelay )
+    {
     analogVolts = (int)((float)(analogReadMilliVolts(BATT_PIN) * 200 / VMAX_BATT));
     batteryCheckMillis = millis();
-  }
+    }*/
 
   if (millis() - weatherCheckMillis > weatherCheckDelay )
   {
@@ -347,6 +347,18 @@ void loop()
     Serial.println("Show screen");
     showScreen();
   }
+  else if (!display_on && (millis() - displayOffMillis) > batteryCheckDelay)
+  {
+    WiFi.disconnect(true);
+    WiFi.mode(WIFI_OFF);
+    for (int i = 0; i < 8; i++)
+    {
+      analogVolts += (int)((float)(analogReadMilliVolts(BATT_PIN) * 200 / VMAX_BATT));
+    }
+    analogVolts /= 8;
+    WiFi.begin(mySSID.c_str(), myPass.c_str());
+    displayOffMillis = millis();
+  }
   //  else if (!button1_state && display_on)
   //  {
   //    display.clearDisplay();
@@ -368,6 +380,7 @@ void loop()
       display.clearDisplay();
       display.display();
       display_on = false;
+      displayOffMillis = millis();
     }
   }
 }
