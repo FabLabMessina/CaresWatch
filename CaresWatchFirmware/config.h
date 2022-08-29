@@ -6,6 +6,7 @@
 #define BATT_PIN  12
 
 const float VMAX_BATT = 4350.0;
+const float VMIN_BATT = 3350.0;
 
 const char* AP_SSID = "CARES Watch";
 const char* AP_PASS = "";
@@ -36,6 +37,6 @@ const String OW_APPID = "&APPID=";
 // END NTP Settings
 
 // Battery Settings
-const long batteryCheckDelay = 30000;
+const long batteryCheckDelay = 180000;
 // END Battery settings
 #endif
