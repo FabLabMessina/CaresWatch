@@ -344,11 +344,7 @@ void loop()
   {
     WiFi.disconnect(true);
     WiFi.mode(WIFI_OFF);
-    for (int i = 0; i < 8; i++)
-    {
-      analogVolts = constrain(analogReadMilliVolts(BATT_PIN) * 2, VMIN_BATT, VMAX_BATT);
-    }
-    analogVolts /= 8;
+    analogVolts = constrain(analogReadMilliVolts(BATT_PIN) * 2, VMIN_BATT, VMAX_BATT);
     WiFi.begin(mySSID.c_str(), myPass.c_str());
     displayOffMillis = millis();
   }
