@@ -138,7 +138,8 @@ void setup() {
   display.setTextColor(SSD1306_WHITE);
   display.setCursor(0, 2);
   display.setFont();
-  analogVolts = (int)((float)(analogReadMilliVolts(BATT_PIN) / VMAX_BATT) * 200);
+  analogVolts = constrain(analogReadMilliVolts(BATT_PIN) * 2, VMIN_BATT, VMAX_BATT);
+
   drawSplashScreen();
 
   if (!digitalRead(BUTTON_1) || !preferences.getString("mySSID", _ssid, 20) || !preferences.getString("myPass", _pass, 20) || !preferences.getString("myCity", _city, 20) || !preferences.getString("myOWToken", _owtoken, 50) )
@@ -302,7 +303,8 @@ void showMainScreen()
   }
   display.setCursor(104, 2);
 
-  display.print((String)analogVolts + (String)'%');
+  int batt_percentage = map(analogVolts, VMIN_BATT, VMAX_BATT, 0, 100);
+  display.print((String)batt_percentage + (String)'%');
 
   if (wifi_status == WL_CONNECTED)
   {
@@ -353,7 +355,7 @@ void loop()
     WiFi.mode(WIFI_OFF);
     for (int i = 0; i < 8; i++)
     {
-      analogVolts += (int)((float)(analogReadMilliVolts(BATT_PIN) * 200 / VMAX_BATT));
+      analogVolts = constrain(analogReadMilliVolts(BATT_PIN) * 2, VMIN_BATT, VMAX_BATT);
     }
     analogVolts /= 8;
     WiFi.begin(mySSID.c_str(), myPass.c_str());

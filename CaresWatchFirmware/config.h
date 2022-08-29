@@ -6,6 +6,7 @@
 #define BATT_PIN  12
 
 const float VMAX_BATT = 4350.0;
+const float VMIN_BATT = 3350.0;
 
 const char* AP_SSID = "CARES Watch";
 const char* AP_PASS = "";
